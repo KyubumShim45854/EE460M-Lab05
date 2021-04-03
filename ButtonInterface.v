@@ -15,25 +15,24 @@ module ButtonFunctionallity(
     
     reg[3:0] result; //0:null, 1:push, 2:del...
     assign mode=result;
-    reg A2,B2,C2,D2;
-    wire newA,newB,newC,newD;
-    assign newA = A2;
-    assign newB = B2;
-    assign newC = C2;
-    assign newD = D2;
-    clkDivFF u1(clk,debounceClk);
-    always@(posedge debounceClk) begin
-    A2 = A;
-    B2 = B;
-    C2 = C;
-    D2 = D;
-    end
+  
     always @(posedge clk) begin
-        result=0;       
-        result=newA?result+4'b1000:result;
-        result=newB?result+4'b0100:result;
-        result=newC?result+4'b0010:result;
-        result=newD?result+4'b0001:result;
+        case({A,B,C,D})
+        4'b0000: result <=4'b0000;
+        4'b0001: result <=4'b0001;
+        4'b0010: result <=4'b0010;
+        4'b1000: result <= 4'b1000;
+        4'b1001: result <= 4'b1001;
+        4'b1010: result <= 4'b1010;
+        4'b0100: result <= 4'b0100;
+        4'b0101: result <= 4'b0101;
+        4'b0110: result <= 4'b0110;
+        4'b1100: result <=4'b1100;
+        4'b1101: result <= 4'b1101;
+        4'b1110: result <= 4'b1110;
+        default: result <= 4'b0000;
+        endcase
+        
     end
     
 endmodule

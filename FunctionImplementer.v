@@ -40,15 +40,18 @@ module controller(clk, cs, we, address, data_in, data_out, btns, sw, leds, segs,
     assign leds[6:0]=DAR[6:0];
     assign cs=1;
        
-    
-    always @ (posedge clk) begin
+     wire slow_clk;
+   clkDivFF u1(clk,slow_clk);
+ /*   always @ (posedge slow_clk) begin
         state<=nextState;
         //Check if Empty
         empty<=(SPR==8'h7F)?1:0;       
-    end
+    end */
     
-    always @ (*) begin
-
+    always @ (posedge slow_clk) begin
+        
+        empty <= (SPR == 8'h7F)?1:0;
+        we = 0;
         case (state)
             0: begin //Mode 00: Push/POP 
                 DVR<=data_in;
@@ -74,14 +77,14 @@ module controller(clk, cs, we, address, data_in, data_out, btns, sw, leds, segs,
                     SPR<=SPR; //inc pointer
                     DAR<=DAR;
                 end
-                nextState<=mode;  //exit state                  
+                state<=mode;  //exit state                  
             end
             
             1: begin //Add/Sub
                 we = 0;
                 address<=DAR;
                 DVR<=data_in;
-                nextState<=4;       // wait->pop->wait->calc
+                state<=4;       // wait->pop->wait->calc
                 if(sel==1) begin        //add
                     DAR<=SPR+1;
                     address<=SPR+1;
@@ -92,7 +95,7 @@ module controller(clk, cs, we, address, data_in, data_out, btns, sw, leds, segs,
                     address<=SPR+1;
                     addOp<=0;      //sub
                 end
-                else nextState<=0;  //exit state
+                else state<=0;  //exit state
             end
             
             2: begin//top/clr
@@ -105,22 +108,22 @@ module controller(clk, cs, we, address, data_in, data_out, btns, sw, leds, segs,
                      DAR<=0;
                      DVR<=0;
                 end
-                nextState<=mode; //Exit state
+                state<=mode; //Exit state
             end
             
             3: begin//Inc/Dec Adder
                 we = 0;
                 DVR<=data_in;
                 address<=DAR;
-                nextState<=3;
+                state<=3;
                 if(sel==1) DAR<=DAR+1;  //Inc adder
                 else if(sel==2) DAR<=DAR-1; //Dec adder
-                nextState<=mode;  //exit
+                state<=mode;  //exit
             end
            
             4: begin //calc: order->(wait)->pop->(wait)->pop->(wait)->CALC->(wait)->mode
                 we = 0;
-                nextState<=5;
+                state<=5;
             end
             5: begin//calc: (pop)->wait->pop->wait->CALC
                 we = 0;
@@ -128,13 +131,13 @@ module controller(clk, cs, we, address, data_in, data_out, btns, sw, leds, segs,
                 SPR<=SPR+1;
                 DAR<=DAR+1;
                 address<=DAR+1;
-                nextState<=8;
+                state<=8;
             end                                            
             6: begin //calc: pop->wait->(pop)->wait->CALC
                 we = 0;
                 tempReg2<=data_in;
                 SPR<=SPR+1;
-                nextState<=9;
+                state<=9;
             end
             7: begin      //calc: pop->wait->(pop)->wait->CALC)->wait->mode              
                 we=1;
@@ -142,10 +145,10 @@ module controller(clk, cs, we, address, data_in, data_out, btns, sw, leds, segs,
                 if(addOp) data_out<=tempReg1+tempReg2; //add
                 else data_out<=tempReg1-tempReg2;       //sub
                 SPR<=SPR-1;                                     
-                nextState<=mode;
+                state<=mode;
             end
-            8: nextState <= 6;
-            9: nextState <= 7;
+            8: state <= 6;
+            9: state <= 7;
            
             default: begin
                 we=0;
@@ -153,7 +156,7 @@ module controller(clk, cs, we, address, data_in, data_out, btns, sw, leds, segs,
                 SPR<=0;
                 DAR<=0;
                 DVR<=0;
-                nextState<=0;
+                state<=0;
             end                    
     
     endcase
