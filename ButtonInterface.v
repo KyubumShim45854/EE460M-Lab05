@@ -12,15 +12,30 @@ module ButtonFunctionallity(
     ButtonInterface btnDown(clk, btnIn[0],D);
     
     
+    
     reg[3:0] result; //0:null, 1:push, 2:del...
     assign mode=result;
-    always @(posedge clk) begin
-        result<=0;       
-        result<=A?result+4'b1000:0;
-        result<=B?result+4'b0100:0;
-        result<=C?result+4'b0010:0;
-        result<=D?result+4'b0001:0;
+    reg A2,B2,C2,D2;
+    wire newA,newB,newC,newD;
+    assign newA = A2;
+    assign newB = B2;
+    assign newC = C2;
+    assign newD = D2;
+    clkDivFF u1(clk,debounceClk);
+    always@(posedge debounceClk) begin
+    A2 = A;
+    B2 = B;
+    C2 = C;
+    D2 = D;
     end
+    always @(posedge clk) begin
+        result=0;       
+        result=newA?result+4'b1000:result;
+        result=newB?result+4'b0100:result;
+        result=newC?result+4'b0010:result;
+        result=newD?result+4'b0001:result;
+    end
+    
 endmodule
 
 
@@ -60,3 +75,7 @@ module DebounceDelayFF(input clk, debounceClk,inVal,
         if(debounceClk==1) Q <= inVal;
          end
 endmodule 
+
+
+
+    
